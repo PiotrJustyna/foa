@@ -5,5 +5,5 @@ Feedback On Anything.
 ## build
 
 ```
-$ rebar3 compile
+$ ./start.sh
 ```
