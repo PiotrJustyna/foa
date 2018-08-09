@@ -32,8 +32,8 @@ allowed_methods(Req, State) ->
 
 %%--------------------------------------------------------------------
 content_types_provided(Req, State) ->
-    {[{{<<"text">>, <<"plain">>, []}, get_feedback}], Req,
-     State}.
+    {[{{<<"application">>, <<"json">>, []}, get_feedback}],
+     Req, State}.
 
 %%--------------------------------------------------------------------
 content_types_accepted(Req, State) ->
@@ -45,25 +45,30 @@ content_types_accepted(Req, State) ->
 create_feedback(Req0, State) ->
     quickrand:seed(), % required for get_v4_urandom
     {ok, Data, Req1} = cowboy_req:read_body(Req0),
-    FileName = uuid:uuid_to_string(uuid:get_v4_urandom()),
-    io:format("Received: ~s~n", [Data]),
-    file:write_file(io_lib:format("feedback/~s.txt",
-				  [FileName]),
-		    Data),
-    Req2 = cowboy_req:set_resp_body(FileName, Req1),
+    FeedbackId = uuid:uuid_to_string(uuid:get_v4_urandom()),
+    file:write_file(get_file_name(FeedbackId), Data),
+    Req2 =
+	cowboy_req:set_resp_body(io_lib:format("{\"id\": \"~s\"}",
+					       [FeedbackId]),
+				 Req1),
     {true, Req2, State}.
 
 %%--------------------------------------------------------------------
-% TODO
-resource_exists(Req, State) -> {true, Req, State}.
+resource_exists(Req, State) ->
+    #{id := Id} = cowboy_req:match_qs([{id, [], undefined}],
+				      Req),
+    {filelib:is_regular(get_file_name(Id)), Req, State}.
 
 %%--------------------------------------------------------------------
 get_feedback(Req, State) ->
     #{id := Id} = cowboy_req:match_qs([{id, [], undefined}],
 				      Req),
-    {Id, Req, State}.
+    {ok, File} = file:read_file(get_file_name(Id)),
+    {File, Req, State}.
 
 %%====================================================================
 %% Internal functions
 %%====================================================================
 
+get_file_name(FileId) ->
+    io_lib:format("feedback/~s.json", [FileId]).
