@@ -45,13 +45,18 @@ content_types_accepted(Req, State) ->
 create_feedback(Req0, State) ->
     quickrand:seed(), % required for get_v4_urandom
     {ok, Data, Req1} = cowboy_req:read_body(Req0),
-    FeedbackId = uuid:uuid_to_string(uuid:get_v4_urandom()),
-    file:write_file(get_file_name(FeedbackId), Data),
-    Req2 =
-	cowboy_req:set_resp_body(io_lib:format("{\"id\": \"~s\"}",
-					       [FeedbackId]),
-				 Req1),
-    {true, Req2, State}.
+    case validate_input(Data) of
+        null ->
+            {false, Req1, State};
+        Json ->
+            FeedbackId = uuid:uuid_to_string(uuid:get_v4_urandom()),
+            file:write_file(get_file_name(FeedbackId), Data),
+            Req2 =
+            cowboy_req:set_resp_body(io_lib:format("{\"id\": \"~s\"}",
+                                [FeedbackId]),
+                        Req1),
+            {true, Req2, State}
+    end.
 
 %%--------------------------------------------------------------------
 resource_exists(Req, State) ->
@@ -72,3 +77,10 @@ get_feedback(Req, State) ->
 
 get_file_name(FileId) ->
     io_lib:format("feedback/~s.json", [FileId]).
+
+%%--------------------------------------------------------------------
+validate_input(Data) ->
+    try jsx:decode(Data, [return_maps])
+    catch
+        _:_ -> null
+    end.
