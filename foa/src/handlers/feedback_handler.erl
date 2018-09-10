@@ -28,27 +28,31 @@ init(Req, State) -> {cowboy_rest, Req, State}.
 
 %%--------------------------------------------------------------------
 allowed_methods(Req, State) ->
+    io:format("methods allowed"),
     {[<<"POST">>, <<"GET">>], Req, State}.
 
 %%--------------------------------------------------------------------
 content_types_provided(Req, State) ->
+    io:format("content types provided"),
     {[{{<<"application">>, <<"json">>, []}, get_feedback}],
      Req, State}.
 
 %%--------------------------------------------------------------------
 content_types_accepted(Req, State) ->
+    io:format("conent types accepted"),
     {[{{<<"application">>, <<"json">>, []},
        create_feedback}],
      Req, State}.
 
 %%--------------------------------------------------------------------
 create_feedback(Req0, State) ->
+    io:format("creating feedback"),
     quickrand:seed(), % required for get_v4_urandom
     {ok, Data, Req1} = cowboy_req:read_body(Req0),
     case validate_input(Data) of
-        null ->
+        false ->
             {false, Req1, State};
-        Json ->
+        true ->
             FeedbackId = uuid:uuid_to_string(uuid:get_v4_urandom()),
             file:write_file(get_file_name(FeedbackId), Data),
             Req2 =
@@ -62,6 +66,11 @@ create_feedback(Req0, State) ->
 resource_exists(Req, State) ->
     #{id := Id} = cowboy_req:match_qs([{id, [], undefined}],
 				      Req),
+    Res = file:list_dir("some_directory"),
+    case Res of
+        {ok, Filenames} -> io:format("Filenames: ~w~n", [Filenames]);
+        _ -> io:format("no files found")
+    end,
     {filelib:is_regular(get_file_name(Id)), Req, State}.
 
 %%--------------------------------------------------------------------
@@ -80,7 +89,5 @@ get_file_name(FileId) ->
 
 %%--------------------------------------------------------------------
 validate_input(Data) ->
-    try jsx:decode(Data, [return_maps])
-    catch
-        _:_ -> null
-    end.
+    io:format("validating input: ~w~n~s~n", [Data, Data]),
+    jsx:is_json(Data).

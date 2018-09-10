@@ -16,6 +16,7 @@ _build
 .idea
 *.iml
 rebar3.crashdump
-alpine/run/artifacts
+erlang_docker/alpine/run/artifacts
+erlang_docker/foa
 rebar.lock
 ssl

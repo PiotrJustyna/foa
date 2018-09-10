@@ -7,7 +7,8 @@
    [kernel,
     stdlib,
     cowboy,
-    uuid
+    uuid,
+    jsx
    ]},
   {env,[]},
   {modules, []},
