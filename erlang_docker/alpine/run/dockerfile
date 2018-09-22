@@ -1,9 +1,0 @@
-FROM alpine:3.3
-
-# Install the released application
-COPY artifacts/foa /foa
-
-# Expose relevant ports
-EXPOSE 3000
-
-CMD ["/foa/bin/foa", "foreground"]

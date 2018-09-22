@@ -1,3 +1,0 @@
-%% encoding: UTF-8
-{application,foa}.
-{modules,[feedback_handler,foa_app,foa_sup]}.
